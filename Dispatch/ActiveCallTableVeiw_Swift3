@@ -1,0 +1,243 @@
+class ActiveCallsTableViewController: UITableViewController {
+    
+ 
+    
+    let cellId = "callCell"
+    var users = [User]()
+    var unAcceptedUsers = [User]()
+    var enRoute = [User]()
+    var onSite = [User]()
+    
+       //let items = [[unAcceptedUsers],[enRoute]]()
+    var isFiltered = Bool()
+    
+   let section = ["Unaccepted", "Enroute", "Onsite"]
+    
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        
+        navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Cancel", style: .plain, target: self, action: #selector(handleCancel))
+        
+        tableView.register(UserCell.self, forCellReuseIdentifier: cellId)
+        
+        
+       fetchUser()
+    
+    }
+     func tableView(tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+        print("titleForHeader")
+        return self.section[section]
+        
+        
+    }
+
+    func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+        
+        return 3
+       
+    }
+    
+    /// Returns the amount of minutes from another date
+ 
+    func fetchUser() {
+        
+        print("This is fetchUser")
+        
+        FIRDatabase.database().reference().child("Calls").observe(.childAdded, with: { (snapshot) in
+            
+            if let dictionary = snapshot.value as? [String: AnyObject]{
+                let user = User()
+                
+                
+                user.setValuesForKeys(dictionary)
+                self.users.append(user)
+                
+                
+                
+                if user.Job_Status == "Unaccepted" {
+                    self.isFiltered = true
+                    self.unAcceptedUsers.append(user)
+                     print("\(user.Name) True")
+                }else if user.Job_Status == "Enroute"{
+                    self.isFiltered = false
+                    self.enRoute.append(user)
+                    print("\(user.Name) False")
+                }else{
+                    self.onSite.append(user)
+                }
+                
+               
+                //print(self.user)
+                //DispatchQueue.main.asynchronously(execute: {self.tableView.reloadData()})
+                 DispatchQueue.main.async (execute: { self.tableView.reloadData()
+                
+                    print("Later in fetchUser")
+                })
+                
+        
+            }
+            
+            }, withCancel: nil)
+       
+    }
+    
+    
+    func handleCancel() {
+        dismiss(animated: true, completion: nil)
+    }
+    
+    //let items = statusUser(status.text)
+    
+  func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        //var rowCount: Int
+    
+    print(" This is numbers Of Rows")
+    if section == 0 {
+            //rowCount = unAcceptedUsers.count
+            print(unAcceptedUsers.count)
+            return unAcceptedUsers.count
+            
+        }
+        else if section == 1{
+            return enRoute.count
+            //rowCount = enRoute.count
+            
+        }else {
+            return onSite.count
+        }
+       
+       //return rowCount
+    }
+    
+    func userForIndexPath(indexPath: NSIndexPath) -> User {
+        if indexPath.section == 0 {
+            // print(unAcceptedUsers)
+            return unAcceptedUsers[indexPath.row]
+           
+        }
+            print(enRoute)
+            return unAcceptedUsers[indexPath.row]
+    }
+    
+
+     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
+        //print("Call Cell")
+        //let cell = UITableViewCell(style: .Subtitle, reuseIdentifier: cellId)
+        
+        print("CellForRow")
+        
+        let cell = tableView.dequeueReusableCell(withIdentifier: cellId, for: indexPath as IndexPath)
+        let user:User
+        //let user = userForIndexPath(indexPath)
+        
+        if indexPath.section == 0 {
+            user = unAcceptedUsers[indexPath.row]
+        }else if indexPath.section == 1{
+            user = enRoute[indexPath.row]
+        }else{
+            user = onSite[indexPath.row]
+        }
+        
+        let dateFormatter = DateFormatter()
+        dateFormatter.timeStyle = .short
+        let date3 = dateFormatter.date(from: user.Time_Logged!)
+        print("THE TIME IS \(date3)")
+        
+       let elapesedTime = NSDate().timeIntervalSince(date3!)
+        //let minutesPassed = (elapesedTime / 3600)
+        
+        //let dateMinutes = NSDate().timeIntervalSinceReferenceDate (date3)
+        
+       // let calcendar = NSCalendar.currentCalendar()
+        //let dateComponents = calcendar.components(NSCalendarUnit.Minute, fromDate: date3!, toDate: NSDate(), options: nil)
+        //let minutesPassed = dateComponents
+        print ("THE TIME IS \(elapesedTime)")
+        
+        let duration = Int(elapesedTime)
+        let minutesLogged = String(duration)
+       print(duration)
+        
+
+        //let user = users[indexPath.row]
+        cell.textLabel?.text = user.Name
+        cell.detailTextLabel?.text = minutesLogged
+        //print(user.Adress)
+        
+       
+       /*
+        if user.Time_Logged < date2  {
+           cell.detailTextLabel?.textColor = UIColor.greenColor()
+        }else if user.Time_Logged < date6{
+            cell.detailTextLabel?.textColor = UIColor.orangeColor()
+        }else if user.Time_Logged > date6{
+            cell.detailTextLabel?.textColor = UIColor.redColor()
+        }
+*/
+        return cell
+        
+    }
+    //var valueToPass:String!
+    var valueToPass:String!
+    //var productsValue = [unAcceptedCallDataVie]]
+    
+    func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
+        
+        
+        tableView.deselectRow(at: indexPath as IndexPath, animated: true)
+        
+        let callInfoView:UIViewController = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "Callinfo") as UIViewController
+        let unAcceptedView:UIViewController = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "unAcceptedCall") as UIViewController
+        
+        let currentCell = tableView.cellForRow(at: indexPath as IndexPath) as UITableViewCell!;
+        //let ref =
+        //let currentCell2 = tableView.cellForRow(at: indexPath as IndexPath) as UITableViewCell!;
+        
+        
+        
+        if indexPath.section == 0 {
+            valueToPass = currentCell?.textLabel!.text
+            //valueToPass = currentCell2
+            performSegue(withIdentifier: "passData", sender: self)
+            self.present(unAcceptedView, animated: true, completion: nil)
+            
+            //print(valueToPass)
+        }else if indexPath.section == 1{
+            self.present(callInfoView, animated: true, completion: nil)
+            print("Enroute")
+        }else {
+            self.present(callInfoView, animated: true, completion: nil)
+            print("Onsite")
+        }
+       // print(user.Adress)
+    }
+    
+    
+     func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+        if (segue.identifier == "passData") {
+            //let user:User
+            // initialize new view controller and cast it as your view controller
+            let viewController = segue.destination as! unAcceptedCallDataView
+            
+            // your new view controller should have property that will store passed value
+            //var passedValue = viewController.nameLable.text
+            //print(user.Adress)
+            viewController.LableText = valueToPass
+            
+        }
+    
+}
+    
+}
+    
+
+
+class UserCell: UITableViewCell {
+    override init(style: UITableViewCellStyle, reuseIdentifier: String?) {
+        super.init(style: .subtitle, reuseIdentifier: reuseIdentifier)
+    }
+    required init?(coder aDecoder: NSCoder){
+        fatalError("init(coder:) has not been implemented")
+       
+    }
+}
